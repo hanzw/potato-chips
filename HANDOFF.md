@@ -49,6 +49,17 @@ personal project details.
   than a public dependency. Serena is the public profile candidate because its
   upstream documentation explicitly supports both agents and a narrow LSP-backed
   configuration.
+- Serena 1.6.1 was installed locally and validated through the MCP protocol in
+  isolated TypeScript and Python repository snapshots. Codex and Claude Code
+  contexts both passed symbol lookup with an exact seven-tool `fixed_tools`
+  surface. `read_only` plus `no-memories` alone did not hide deferred editing and
+  memory tools, so the allowlist is now a release requirement.
+- Unattended project creation must pass explicit languages; automatic
+  multi-language confirmation aborted when no terminal answer was available.
+- No real project received a `.serena` directory, temporary project
+  registrations were removed, and the isolated test tree was moved to Trash.
+  Global MCP registration remains blocked until the versioned Potato Chips
+  installer owns backup, verification, migration, and rollback.
 
 ## Next step after review
 

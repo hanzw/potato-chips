@@ -168,15 +168,35 @@ or repeated discovery across a large repository that native search cannot
 answer efficiently.
 
 The profile exposes Serena's LSP-backed retrieval tools to both Codex and Claude
-Code. Its overlapping file, shell, and editing utilities stay disabled, and its
-memory feature stays disabled because durable history belongs to the selected
-memory provider. This keeps Serena a code-intelligence layer rather than a
-second agent workflow or memory system.
+Code through an explicit `fixed_tools` allowlist:
+
+```text
+get_symbols_overview       find_symbol
+find_referencing_symbols   find_implementations
+find_declaration           get_diagnostics_for_file
+get_diagnostics_for_symbol
+```
+
+Using only `read_only` or Serena's `no-memories` mode is insufficient: deferred
+tool discovery can still advertise overlapping editing or memory tools. The
+allowlist makes the MCP surface itself small. File, shell, editing, onboarding,
+and memory tools are absent, so durable history remains the responsibility of
+the selected memory provider.
+
+The installer must select project languages explicitly in non-interactive runs.
+Serena's automatic multi-language confirmation can otherwise wait for terminal
+input and abort in an unattended Agent session.
 
 The profile deliberately does not default to an embedding database or graph
 service. Those systems can improve natural-language or architectural discovery,
 but add indexing, storage, daemon, credential, or database lifecycle costs that
 do not earn an always-on place in the core.
+
+Local protocol validation with Serena 1.6.1 passed the Codex and Claude Code
+contexts against representative TypeScript and Python repositories. Both
+contexts exposed exactly the seven tools above and completed real symbol
+queries. Global Agent registration and replacement of an existing code indexer
+remain installer acceptance tests, not manual setup steps.
 
 ### Deliberate non-defaults
 
