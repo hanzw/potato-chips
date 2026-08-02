@@ -22,10 +22,14 @@ personal project details.
 - Install upstream Skills from their canonical repositories; never copy their
   bodies into this repository.
 - Keep the default stack small and move security, evaluation, frontend, and
-  long-task workflows into optional profiles when appropriate.
+  specialized workflows into optional profiles when appropriate.
 - Ship generalized global engineering rules for Codex and Claude, merged with
   markers and exact rollback rather than overwriting user files.
 - Use Agent Skill Evolution for the stack's own update/dedup/remove lifecycle.
+- Run `first-principles-checkpoint` before workflow selection and again only at
+  decisions where complexity can compound.
+- Recognize medium/large tasks automatically and start or resume Buildomator via
+  `/bm:do` when available; use a bounded `HANDOFF.md` fallback when unavailable.
 
 ## Evidence already collected
 
@@ -34,8 +38,9 @@ personal project details.
   and personal/project-specific Skills; cleanup is incomplete.
 - `mattpocock/skills` exposes portable engineering candidates, but its current
   `code-review` expects Matt-specific setup files and tool semantics.
-- Buildomator is useful task-state infrastructure but should not silently become
-  a cross-agent core dependency until both-agent behavior is verified.
+- Buildomator is Claude Code-native upstream. Potato Chips treats it as the
+  preferred medium/large state engine only when `/bm:` is detected and retains
+  the same task-sizing behavior with a truthful Codex fallback.
 
 ## Next step after review
 

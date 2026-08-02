@@ -12,6 +12,62 @@ removal path.
 > This repository is currently a **design preview**. The installer has not been
 > published yet. Review the scope below before treating it as a distribution.
 
+## Start here: First Principles before workflow
+
+`first-principles-checkpoint` is the first control in the stack, not another
+optional methodology. At session start, the agent answers four questions from
+current repository evidence:
+
+1. What concrete outcome must exist when this task is done?
+2. What facts must be true for that outcome to be trustworthy?
+3. What is the smallest next action that can prove or disprove one fact?
+4. What process, artifact, or scope can be removed or deferred?
+
+That checkpoint selects the lightest workflow that can still produce reliable
+evidence. It runs again only at decisions where complexity can compound: after
+a blocker or failed test, before adding a dependency or abstraction, at the end
+of an implementation wave, and before claiming completion.
+
+## Automatic task sizing
+
+Potato Chips classifies the task before choosing a workflow. A task is **small**
+only when all small-task conditions hold; any medium or large signal moves it
+upward.
+
+| Size | Recognition signals | Default action |
+| --- | --- | --- |
+| Small | One outcome, one local seam, one focused session, one direct verification path, no migration or coordinated release | Work directly; do not create planning state |
+| Medium | Multiple dependent steps, more than one module/service, schema or configuration changes, integration/E2E evidence, or a likely PR-sized change | Auto-start Buildomator routing; prefer a validated quick task when scope is already clear |
+| Large | Cross-session or multi-repository work, architectural change, data migration, staged release/rollback, parallel workstreams, or external coordination | Auto-start or resume a Buildomator milestone before implementation |
+
+If sizing is ambiguous, take one read-only discovery step. If the task still has
+dependent unknowns, classify it as medium. Risk alone does not justify a giant
+plan; it just requires the relevant evidence and recovery path.
+
+### Startup routing
+
+```text
+read repository truth
+        ↓
+first-principles checkpoint
+        ↓
+classify small / medium / large
+        ├─ small  -> direct execution + direct verification
+        └─ M/L    -> resume existing state, else invoke /bm:do <task>
+```
+
+When `/bm:` is available, the agent starts the medium/large workflow without
+waiting for the user to remember a command. It emits one short notice, then lets
+Buildomator route to the appropriate quick task, discussion, project, milestone,
+plan, execution, or verification flow. An existing `.planning/STATE.md` or
+unfinished handoff is resumed before creating new state.
+
+Buildomator is currently
+[Claude Code-native](https://github.com/buildomator/buildomator). On a Codex
+installation where `/bm:` is not available, Potato Chips uses the same sizing
+rules and maintains a bounded `HANDOFF.md`; it must never claim that
+Buildomator started when it did not.
+
 ## Why “Potato Chips”?
 
 A Skill should be a small, composable capability chip—not another framework.
@@ -50,7 +106,7 @@ Skill discovery remains authoritative.
 
 The default is intentionally smaller than a “top 100 Skills” list.
 
-### Essential lifecycle
+### Essential control loop
 
 Installed from
 [`hanzw/agent-skill-evolution`](https://github.com/hanzw/agent-skill-evolution)
@@ -58,9 +114,25 @@ Installed from
 
 | Skill | Reason it earns a default slot |
 | --- | --- |
+| `first-principles-checkpoint` | Selects the smallest trustworthy workflow at startup and prevents drift during execution |
 | `evolve-skills` | Finds canonical sources, updates, deduplicates, and removes stale Skills |
-| `first-principles-checkpoint` | Stops scope, context, and process drift before they compound |
 | `skill-governance` | Tests an uncertain keep/update/remove decision instead of guessing |
+
+### Medium/large task engine
+
+[`buildomator/buildomator`](https://github.com/buildomator/buildomator) (MIT) is
+included as the preferred stateful workflow whenever its `/bm:` command surface
+is available. Fresh Claude Code installation follows the upstream commands:
+
+```text
+/plugin marketplace add buildomator/marketplace
+/plugin install bm@buildomator
+/reload-plugins
+```
+
+Potato Chips uses `/bm:do <task>` as the automatic routing entry rather than
+hard-coding one large workflow for every task. The legacy `/gsd:` prefix remains
+a compatibility alias during the 4.x line; new documentation uses `/bm:`.
 
 ### Engineering core under review
 
@@ -84,7 +156,6 @@ Optional means opt-in, not secretly installed by the default command.
 | Profile | Canonical source | Purpose |
 | --- | --- | --- |
 | Skill evaluation | [`promptfoo/promptfoo`](https://github.com/promptfoo/promptfoo) (MIT) | Install `promptfoo-evals` and `promptfoo-provider-setup` for controlled Skill ablations |
-| Long-task workflow | [`buildomator/buildomator`](https://github.com/buildomator/buildomator) (MIT) | Planning, execution, verification, and cross-session task state when its plugin is supported |
 | Security audit | [`trailofbits/skills`](https://github.com/trailofbits/skills) (CC BY-SA 4.0) | Add narrowly selected security Skills for audit work, not normal coding turns |
 
 ### Deliberate non-defaults
@@ -141,6 +212,10 @@ Claude Code  -> ~/.claude/CLAUDE.md
 
 The shared rules cover only durable engineering behavior:
 
+- run First Principles before selecting the workflow and at complexity-bearing
+  decision points;
+- automatically start or resume Buildomator for recognized medium/large tasks
+  when `/bm:` is available, otherwise maintain a bounded handoff;
 - think before coding and surface assumptions;
 - prefer the smallest implementation that solves the request;
 - make surgical changes and preserve dirty worktrees;
@@ -179,11 +254,14 @@ Most Skill packs optimize for **how much they install**. Potato Chips optimizes
 for **how confidently the stack can evolve**:
 
 1. one source per capability;
-2. the same core behavior in Codex and Claude;
-3. optional profiles instead of permanent context growth;
-4. evidence before keep/update/remove decisions;
-5. reversible global changes;
-6. explicit upstream credit and independent licenses.
+2. First Principles chooses the lightest adequate workflow;
+3. medium/large tasks automatically gain durable state instead of relying on
+   the user to remember a command;
+4. the same task-sizing behavior in Codex and Claude, with an honest fallback
+   where Buildomator is unavailable;
+5. optional profiles instead of permanent context growth;
+6. evidence before keep/update/remove decisions;
+7. reversible global changes and explicit upstream credit.
 
 ## Review before implementation
 
@@ -193,8 +271,8 @@ Please review these decisions first:
 - Should `research` become default or remain optional?
 - Should Matt's current `code-review` be excluded until its project-setup
   dependency is removed upstream?
-- Should Buildomator remain optional because its workflow is not equally native
-  in both agents?
+- Are the medium/large recognition signals conservative enough to avoid
+  starting Buildomator for genuinely small work?
 - Is security better as an opt-in profile rather than an always-loaded default?
 
 The implementation will begin only after this public scope is accepted.
