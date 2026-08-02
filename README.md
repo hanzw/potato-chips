@@ -27,18 +27,12 @@ Potato Chips applies four constraints:
 
 ## Architecture
 
-```text
-First Principles
-       ↓
-Task sizing ── small ─────────────→ direct execution
-       └────── medium / large ────→ stateful workflow
-                                      ↓
-Native Agent Skills ─────────────→ implementation + verification
-Optional code intelligence ──────→ symbol and reference retrieval
-Lifecycle governance ────────────→ update, deduplicate, remove
-```
+Potato Chips is a thin control profile above the native Agent host. It keeps
+workflow instructions, task state, active context, durable memory, retrieval,
+and repository truth separate instead of turning them into one opaque system.
 
-Potato Chips stays at the **Skill layer**. It does not replace an Agent runtime,
+See the [upper-layer architecture and design rationale](docs/ARCHITECTURE.md).
+Potato Chips stays at the **Skill layer**: it does not replace an Agent runtime,
 ADK, model router, permission system, project rules, or memory provider. Native
 Codex and Claude Code discovery remains authoritative.
 
