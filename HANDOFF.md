@@ -30,6 +30,9 @@ personal project details.
   decisions where complexity can compound.
 - Recognize medium/large tasks automatically and start or resume Buildomator via
   `/bm:do` when available; use a bounded `HANDOFF.md` fallback when unavailable.
+- Keep codebase intelligence native-first. Offer Serena as an opt-in profile for
+  symbol and reference retrieval in medium/large repositories, with overlapping
+  file/edit/shell tools and Serena memory disabled.
 
 ## Evidence already collected
 
@@ -41,6 +44,11 @@ personal project details.
 - Buildomator is Claude Code-native upstream. Potato Chips treats it as the
   preferred medium/large state engine only when `/bm:` is detected and retains
   the same task-sizing behavior with a truthful Codex fallback.
+- The existing private codebase MCP is registered in both Codex and Claude, but
+  depends on a local compatibility launcher. It remains a rollback input rather
+  than a public dependency. Serena is the public profile candidate because its
+  upstream documentation explicitly supports both agents and a narrow LSP-backed
+  configuration.
 
 ## Next step after review
 

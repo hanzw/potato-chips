@@ -155,8 +155,28 @@ Optional means opt-in, not secretly installed by the default command.
 
 | Profile | Canonical source | Purpose |
 | --- | --- | --- |
+| Large-codebase intelligence | [`oraios/serena`](https://github.com/oraios/serena) (MIT) | Add LSP-backed symbol lookup and reference tracing for medium/large repositories when native search is insufficient |
 | Skill evaluation | [`promptfoo/promptfoo`](https://github.com/promptfoo/promptfoo) (MIT) | Install `promptfoo-evals` and `promptfoo-provider-setup` for controlled Skill ablations |
 | Security audit | [`trailofbits/skills`](https://github.com/trailofbits/skills) (CC BY-SA 4.0) | Add narrowly selected security Skills for audit work, not normal coding turns |
+
+#### Codebase intelligence: native first
+
+Potato Chips does not install a semantic indexer for every user. Start with the
+host agent's native file search, Git, and language tooling. Enable the Serena
+profile only when the task needs symbol relationships, cross-file references,
+or repeated discovery across a large repository that native search cannot
+answer efficiently.
+
+The profile exposes Serena's LSP-backed retrieval tools to both Codex and Claude
+Code. Its overlapping file, shell, and editing utilities stay disabled, and its
+memory feature stays disabled because durable history belongs to the selected
+memory provider. This keeps Serena a code-intelligence layer rather than a
+second agent workflow or memory system.
+
+The profile deliberately does not default to an embedding database or graph
+service. Those systems can improve natural-language or architectural discovery,
+but add indexing, storage, daemon, credential, or database lifecycle costs that
+do not earn an always-on place in the core.
 
 ### Deliberate non-defaults
 
@@ -172,6 +192,8 @@ Optional means opt-in, not secretly installed by the default command.
 - Local compatibility wrappers, personal finance Skills, organization-specific
   deploy rules, and generated `source-command-*` bridges never belong in the
   public default.
+- Existing private code-index launchers remain local migration inputs; Potato
+  Chips does not publish or depend on them.
 
 These exclusions are about overlap and context quality—not a ranking of the
 upstream projects.
@@ -274,6 +296,7 @@ Please review these decisions first:
 - Are the medium/large recognition signals conservative enough to avoid
   starting Buildomator for genuinely small work?
 - Is security better as an opt-in profile rather than an always-loaded default?
+- Is the Serena profile narrow enough, with native search remaining the default?
 
 The implementation will begin only after this public scope is accepted.
 
