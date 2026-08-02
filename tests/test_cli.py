@@ -146,6 +146,22 @@ class LifecycleTests(unittest.TestCase):
             self.assertIn("Uninstall failed", result.stderr)
             self.assertEqual(codex_rules.read_text(encoding="utf-8"), codex_before)
 
+    def test_codebase_install_dry_run_uses_serena_for_both_agents(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_cli(Path(directory), "codebase-install", "--dry-run")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(
+                "uv tool install --upgrade --python 3.13 serena-agent", result.stdout
+            )
+            self.assertIn("codex mcp add codebase", result.stdout)
+            self.assertIn("--context codex", result.stdout)
+            self.assertIn("claude mcp add --scope user codebase", result.stdout)
+            self.assertIn("--context claude-code", result.stdout)
+            self.assertEqual(result.stdout.count("--project-from-cwd"), 2)
+            self.assertEqual(result.stdout.count("--mode planning"), 2)
+            self.assertEqual(result.stdout.count("--add-mode no-memories"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

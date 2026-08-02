@@ -9,8 +9,8 @@ them from their canonical open-source sources, and keeps every managed
 capability updateable, verifiable, and removable.
 
 > [!NOTE]
-> Potato Chips is in pre-release. The first tagged version will include the
-> reversible installer and versioned profiles described below.
+> Potato Chips is in pre-release. The installer is usable now; the first tag
+> will freeze the public profile and compatibility contract.
 
 ## Why
 
@@ -42,6 +42,42 @@ Potato Chips stays at the **Skill layer**. It does not replace an Agent runtime,
 ADK, model router, permission system, project rules, or memory provider. Native
 Codex and Claude Code discovery remains authoritative.
 
+## Quick start
+
+Preview and install the shared rules:
+
+```bash
+python3 potato_chips.py install --dry-run
+python3 potato_chips.py install
+python3 potato_chips.py verify
+```
+
+Install global code intelligence for both agents:
+
+```bash
+npx skills add hanzw/potato-chips --global \
+  --agent codex claude-code --skill codebase-intelligence --yes
+python3 potato_chips.py codebase-install --dry-run
+python3 potato_chips.py codebase-install
+python3 potato_chips.py codebase-verify
+```
+
+This installs the official `serena-agent` package and registers one user-level
+MCP named `codebase` in Codex and Claude Code. On each new agent session,
+`--project-from-cwd` selects the current Git repository automatically; there is
+no per-project MCP registration. Existing sessions must be restarted to load
+changed MCP configuration.
+
+Update or remove it explicitly:
+
+```bash
+npx skills update codebase-intelligence --global --yes
+python3 potato_chips.py codebase-update
+python3 potato_chips.py codebase-uninstall
+npx skills remove codebase-intelligence --global \
+  --agent codex claude-code --yes
+```
+
 ## The stack
 
 ### Core controls
@@ -53,6 +89,10 @@ From [`hanzw/agent-skill-evolution`](https://github.com/hanzw/agent-skill-evolut
 | `first-principles-checkpoint` | Select the lightest trustworthy workflow and prevent scope drift |
 | `evolve-skills` | Update canonical sources, detect overlap, and remove stale Skills |
 | `skill-governance` | Evaluate uncertain keep, update, or remove decisions |
+
+From this repository, `codebase-intelligence` is the thin routing Skill that
+selects Serena for symbol relationships and broad impact analysis. It contains
+no copied Serena documentation and no project-specific rules.
 
 ### Engineering core
 
@@ -80,10 +120,20 @@ Buildomator integration is unavailable.
 | Skill evaluation | [`promptfoo/promptfoo`](https://github.com/promptfoo/promptfoo) | Controlled Skill and prompt evaluations |
 | Security review | [`trailofbits/skills`](https://github.com/trailofbits/skills) | Focused security workflows |
 
-Code intelligence is native-first. Serena is enabled only when repository-scale
-symbol relationships justify it, and its tool surface is limited to retrieval
-and diagnostics. File editing, shell execution, onboarding, and memory remain
-with their existing owners.
+Code intelligence is native-first. Serena is registered globally, then used
+when repository-scale symbol relationships justify it. Its official `planning`
+and `no-memories` modes keep this integration read-only and prevent a second
+memory layer; repository files remain current truth, and ReMe or another
+selected provider remains the memory layer.
+
+## Scope boundary
+
+- Global Skills contain only reusable, cross-project behavior.
+- Project Skills contain domain rules, deployment procedures, and private data
+  workflows for that repository.
+- A project-specific Skill may expose a thin Claude/Codex adapter, but its body
+  has one canonical source.
+- Serena is global infrastructure, not a project Skill and not a memory store.
 
 ## Automatic workflow selection
 
@@ -102,13 +152,12 @@ rollback path; it does not automatically justify a larger process.
 install → discover → verify → use → update → re-audit → keep or remove
 ```
 
-The release installer will provide:
+The installer provides:
 
 - reversible, marked updates to Codex and Claude Code global rules;
-- canonical upstream installation rather than copied Skill bodies;
-- explicit receipts for managed files and dependencies;
+- official upstream installation rather than copied dependency code;
 - `dry-run`, `verify`, `update`, and `uninstall` commands;
-- post-update duplicate and compatibility checks;
+- verification after install and update;
 - no telemetry, transcript collection, or hidden capability registry.
 
 ## Credits
