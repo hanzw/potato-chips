@@ -2,7 +2,8 @@
 
 > **Crunch skills, not context.**
 
-The lean Agent Skill stack for engineers who use **Codex** and **Claude Code**.
+The lean, **Codex-first** Agent Skill stack for daily software development,
+with a compatible installation path for **Claude Code**.
 
 Potato Chips curates a small set of complementary development Skills, installs
 them from their canonical open-source sources, and keeps every managed
@@ -11,6 +12,20 @@ capability updateable, verifiable, and removable.
 > [!NOTE]
 > Potato Chips is in pre-release. The installer is usable now; the first tag
 > will freeze the public profile and compatibility contract.
+
+## Support policy
+
+| Environment | Support level |
+| --- | --- |
+| Codex Desktop, CLI, and IDE extension | Primary design and validation target |
+| Claude Code | Compatible shared Skills, global rules, and Serena registration |
+| Other Agent Skills hosts | Best effort when they implement the open Agent Skills format |
+
+The portable unit is the Skill, not a replacement runtime. Host-specific
+commands and diagnostics remain explicit: Buildomator is optional and
+Claude-oriented, while `codex-memory-health` targets Codex helpers on macOS.
+Compatibility means the installer preserves each host's native discovery and
+configuration model; it does not imply identical features across hosts.
 
 ## Why
 
@@ -175,8 +190,17 @@ Potato Chips composes open-source work from its original repositories. Each
 dependency retains its own license, authorship, and trademarks. See the linked
 upstream projects for installation details and current documentation.
 
-Potato Chips is not endorsed by OpenAI, Anthropic, or the maintainers of the
-projects listed above.
+Potato Chips is an independent community project and is not affiliated with or
+endorsed by OpenAI, Anthropic, or the maintainers of the projects listed above.
+OpenAI, Codex, Anthropic, Claude, and all upstream project names and marks
+belong to their respective owners; they are used here only to identify
+compatibility and source attribution.
+
+Potato Chips is a Skill distribution and configuration project. It is not a
+sandbox, permission boundary, security product, or substitute for reviewing
+changes before they reach sensitive systems. Preview installer changes with
+`--dry-run`, keep project-specific policies in the project, and report security
+issues through the process in [SECURITY.md](SECURITY.md).
 
 ## License
 

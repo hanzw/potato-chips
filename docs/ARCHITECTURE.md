@@ -7,7 +7,7 @@ creating a second runtime or capability registry.
 ```mermaid
 flowchart TB
     U["Intent + verifiable outcome"] --> G{"Execution environment"}
-    G -->|"existing coding session"| H["Native Agent host<br/>Codex or Claude Code"]
+    G -->|"existing coding session"| H["Native Agent host<br/>Codex primary · Claude Code compatible"]
     H --> C["Potato Chips control profile<br/>global rules + minimal Skill routing"]
     C --> Q{"Task size and risk"}
 
@@ -56,10 +56,11 @@ flowchart TB
 
 ## First-principles decisions
 
-1. **Use the host that already exists.** Codex and Claude Code already provide
-   the Agent loop, context lifecycle, tools, permissions, and native Skill
-   discovery. Adding an ADK above them duplicates ownership without improving
-   the coding loop.
+1. **Use the host that already exists.** Codex is the primary design and
+   validation target. Claude Code remains a compatible host for shared Skills,
+   rules, and MCP registration. Both already provide the Agent loop, context
+   lifecycle, tools, permissions, and native Skill discovery. Adding an ADK
+   above them duplicates ownership without improving the coding loop.
 2. **Choose a runtime only for a custom Agent application.** OpenAI Agents SDK
    is the default OpenAI-native option; Google ADK is an alternative full
    runtime, not a component to stack underneath it.
