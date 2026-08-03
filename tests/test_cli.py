@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -12,13 +14,16 @@ CLI = ROOT / "potato_chips.py"
 
 
 class LifecycleTests(unittest.TestCase):
-    def run_cli(self, home: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    def run_cli(
+        self, home: Path, *args: str, env: dict[str, str] | None = None
+    ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(CLI), *args, "--home", str(home)],
             cwd=ROOT,
             text=True,
             capture_output=True,
             check=False,
+            env=env,
         )
 
     def test_install_verify_and_uninstall_preserve_existing_rules(self) -> None:
@@ -161,6 +166,106 @@ class LifecycleTests(unittest.TestCase):
             self.assertEqual(result.stdout.count("--project-from-cwd"), 2)
             self.assertEqual(result.stdout.count("--mode planning"), 2)
             self.assertEqual(result.stdout.count("--add-mode no-memories"), 2)
+
+    def test_core_install_dry_run_uses_canonical_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_cli(Path(directory), "core-install", "--dry-run")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(
+                "npx skills@latest add hanzw/agent-skill-evolution --global "
+                "--agent codex claude-code --skill first-principles-checkpoint "
+                "evolve-skills skill-governance --yes",
+                result.stdout,
+            )
+            self.assertIn(
+                "npx skills@latest add hanzw/potato-chips --global --agent "
+                "codex claude-code --skill codebase-intelligence "
+                "codex-memory-health --yes",
+                result.stdout,
+            )
+            self.assertIn(
+                "npx skills@latest add promptfoo/promptfoo --global --agent "
+                "codex claude-code --skill promptfoo-evals "
+                "promptfoo-provider-setup --yes",
+                result.stdout,
+            )
+
+    def test_core_lifecycle_dry_run_is_exact_and_reversible(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            updated = self.run_cli(home, "core-update", "--dry-run")
+            removed = self.run_cli(home, "core-uninstall", "--dry-run")
+
+            names = (
+                "first-principles-checkpoint evolve-skills skill-governance "
+                "codebase-intelligence codex-memory-health promptfoo-evals "
+                "promptfoo-provider-setup"
+            )
+            self.assertEqual(updated.returncode, 0, updated.stderr)
+            self.assertIn(
+                f"npx skills@latest update {names} --global --yes", updated.stdout
+            )
+            self.assertEqual(removed.returncode, 0, removed.stderr)
+            self.assertIn(
+                f"npx skills@latest remove {names} --global --agent codex "
+                "claude-code --yes",
+                removed.stdout,
+            )
+
+    def test_core_verify_checks_source_and_both_agents(self) -> None:
+        expected = {
+            "first-principles-checkpoint": "hanzw/agent-skill-evolution",
+            "evolve-skills": "hanzw/agent-skill-evolution",
+            "skill-governance": "hanzw/agent-skill-evolution",
+            "codebase-intelligence": "hanzw/potato-chips",
+            "codex-memory-health": "hanzw/potato-chips",
+            "promptfoo-evals": "promptfoo/promptfoo",
+            "promptfoo-provider-setup": "promptfoo/promptfoo",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            fake_bin = home / "bin"
+            fake_bin.mkdir()
+            inventory = [
+                {
+                    "name": name,
+                    "source": source,
+                    "agents": ["Claude Code", "Codex"],
+                }
+                for name, source in expected.items()
+            ]
+            fake_npx = fake_bin / "npx"
+            fake_npx.write_text(
+                "#!/bin/sh\nprintf '%s\\n' " + repr(json.dumps(inventory)) + "\n",
+                encoding="utf-8",
+            )
+            fake_npx.chmod(0o755)
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env["PATH"] = f"{fake_bin}:{env['PATH']}"
+
+            result = self.run_cli(home, "core-verify", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("7 core Skills verified", result.stdout)
+
+    def test_core_verify_rejects_malformed_native_inventory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            fake_bin = home / "bin"
+            fake_bin.mkdir()
+            fake_npx = fake_bin / "npx"
+            fake_npx.write_text("#!/bin/sh\nprintf '%s\\n' '{}'\n", encoding="utf-8")
+            fake_npx.chmod(0o755)
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env["PATH"] = f"{fake_bin}:{env['PATH']}"
+
+            result = self.run_cli(home, "core-verify", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("JSON array", result.stderr)
 
 
 if __name__ == "__main__":

@@ -38,19 +38,23 @@ Codex and Claude Code discovery remains authoritative.
 
 ## Quick start
 
-Preview and install the shared rules:
+Clone the repository, preview the exact changes, then install the shared rules
+and verified core Skills:
 
 ```bash
+git clone https://github.com/hanzw/potato-chips.git
+cd potato-chips
 python3 potato_chips.py install --dry-run
 python3 potato_chips.py install
+python3 potato_chips.py core-install --dry-run
+python3 potato_chips.py core-install
 python3 potato_chips.py verify
+python3 potato_chips.py core-verify
 ```
 
-Install global code intelligence for both agents:
+Add the optional global Serena code index for both agents:
 
 ```bash
-npx skills add hanzw/potato-chips --global \
-  --agent codex claude-code --skill codebase-intelligence --yes
 python3 potato_chips.py codebase-install --dry-run
 python3 potato_chips.py codebase-install
 python3 potato_chips.py codebase-verify
@@ -65,11 +69,12 @@ changed MCP configuration.
 Update or remove it explicitly:
 
 ```bash
-npx skills update codebase-intelligence --global --yes
+python3 potato_chips.py core-update --dry-run
+python3 potato_chips.py core-update
 python3 potato_chips.py codebase-update
+python3 potato_chips.py core-uninstall --dry-run
+python3 potato_chips.py core-uninstall
 python3 potato_chips.py codebase-uninstall
-npx skills remove codebase-intelligence --global \
-  --agent codex claude-code --yes
 ```
 
 ## The stack
@@ -84,9 +89,19 @@ From [`hanzw/agent-skill-evolution`](https://github.com/hanzw/agent-skill-evolut
 | `evolve-skills` | Update canonical sources, detect overlap, and remove stale Skills |
 | `skill-governance` | Evaluate uncertain keep, update, or remove decisions |
 
-From this repository, `codebase-intelligence` is the thin routing Skill that
-selects Serena for symbol relationships and broad impact analysis. It contains
-no copied Serena documentation and no project-specific rules.
+From this repository:
+
+| Skill | Responsibility |
+| --- | --- |
+| `codebase-intelligence` | Route repository-scale symbol work through Serena, with native search as fallback |
+| `codex-memory-health` | Measure memory pressure and clean only identity-verified orphan helpers |
+
+`promptfoo-evals` and `promptfoo-provider-setup` are installed from
+[`promptfoo/promptfoo`](https://github.com/promptfoo/promptfoo) as support
+dependencies for `skill-governance`; they are not additional routing layers.
+
+See [validation evidence](docs/VALIDATION.md) for the measured routing,
+ablation, live cleanup, and lifecycle results behind this selection.
 
 ### Engineering core
 
