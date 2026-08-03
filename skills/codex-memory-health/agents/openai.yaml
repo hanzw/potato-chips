@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Memory Health"
+  short_description: "Find and safely clear runaway Codex helper processes"
+  default_prompt: "Use $codex-memory-health to diagnose Codex memory pressure and clean only proven safe orphan helpers."

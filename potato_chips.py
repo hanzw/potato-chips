@@ -30,6 +30,16 @@ BLOCK = f"""{START}
 MANAGED_SUFFIX = "\n" + BLOCK
 
 RULE_FILES = (Path(".codex/AGENTS.md"), Path(".claude/CLAUDE.md"))
+CORE_SKILL_SOURCES = {
+    "first-principles-checkpoint": "hanzw/agent-skill-evolution",
+    "evolve-skills": "hanzw/agent-skill-evolution",
+    "skill-governance": "hanzw/agent-skill-evolution",
+    "codebase-intelligence": "hanzw/potato-chips",
+    "codex-memory-health": "hanzw/potato-chips",
+    "promptfoo-evals": "promptfoo/promptfoo",
+    "promptfoo-provider-setup": "promptfoo/promptfoo",
+}
+CORE_SKILLS = tuple(CORE_SKILL_SOURCES)
 SERENA_PACKAGE = "serena-agent"
 SERENA_COMMON_ARGS = (
     "start-mcp-server",
@@ -147,6 +157,139 @@ def uninstall(home: Path) -> int:
         print(f"Uninstall failed; changes rolled back: {error}", file=sys.stderr)
         return 1
     return 0
+
+
+def core_install(home: Path, dry_run: bool = False) -> int:
+    commands = _core_install_commands()
+    if dry_run:
+        for command in commands:
+            print(shlex.join(command))
+        return 0
+    if home != Path.home().resolve():
+        print("Core install only supports the current user home.", file=sys.stderr)
+        return 1
+    if not shutil.which("npx"):
+        print("Core install requires npx on PATH.", file=sys.stderr)
+        return 1
+    try:
+        for command in commands:
+            _run_checked(command)
+    except (OSError, RuntimeError) as error:
+        print(f"Core install failed: {error}", file=sys.stderr)
+        return 1
+    return core_verify(home)
+
+
+def core_verify(home: Path) -> int:
+    if home != Path.home().resolve():
+        print("Core verify only supports the current user home.", file=sys.stderr)
+        return 1
+    try:
+        result = _run(("npx", "skills@latest", "list", "--global", "--json"))
+    except OSError as error:
+        print(f"Cannot run native Skill discovery: {error}", file=sys.stderr)
+        return 1
+    if result.returncode != 0:
+        print("Cannot read the native global Skill inventory.", file=sys.stderr)
+        return 1
+    try:
+        inventory = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print("Native global Skill inventory is not valid JSON.", file=sys.stderr)
+        return 1
+    if not isinstance(inventory, list) or not all(
+        isinstance(item, dict) for item in inventory
+    ):
+        print("Native global Skill inventory is not a JSON array.", file=sys.stderr)
+        return 1
+    installed = {item.get("name"): item for item in inventory}
+    problems = []
+    for name, source in CORE_SKILL_SOURCES.items():
+        item = installed.get(name)
+        if item is None:
+            problems.append(f"{name}: missing")
+            continue
+        if item.get("source") != source:
+            problems.append(f"{name}: expected source {source}")
+        agents = set(item.get("agents", []))
+        if not {"Codex", "Claude Code"}.issubset(agents):
+            problems.append(f"{name}: not installed for Codex and Claude Code")
+    if problems:
+        print("Core Skill verification failed: " + "; ".join(problems))
+        return 1
+    print(f"{len(CORE_SKILLS)} core Skills verified from canonical sources.")
+    return 0
+
+
+def core_update(home: Path, dry_run: bool = False) -> int:
+    command = (
+        "npx",
+        "skills@latest",
+        "update",
+        *CORE_SKILLS,
+        "--global",
+        "--yes",
+    )
+    if dry_run:
+        print(shlex.join(command))
+        return 0
+    if home != Path.home().resolve():
+        print("Core update only supports the current user home.", file=sys.stderr)
+        return 1
+    try:
+        _run_checked(command)
+    except (OSError, RuntimeError) as error:
+        print(f"Core update failed: {error}", file=sys.stderr)
+        return 1
+    return core_verify(home)
+
+
+def core_uninstall(home: Path, dry_run: bool = False) -> int:
+    command = (
+        "npx",
+        "skills@latest",
+        "remove",
+        *CORE_SKILLS,
+        "--global",
+        "--agent",
+        "codex",
+        "claude-code",
+        "--yes",
+    )
+    if dry_run:
+        print(shlex.join(command))
+        return 0
+    if home != Path.home().resolve():
+        print("Core uninstall only supports the current user home.", file=sys.stderr)
+        return 1
+    try:
+        _run_checked(command)
+    except (OSError, RuntimeError) as error:
+        print(f"Core uninstall failed: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _core_install_commands() -> list[tuple[str, ...]]:
+    packages: dict[str, list[str]] = {}
+    for name, source in CORE_SKILL_SOURCES.items():
+        packages.setdefault(source, []).append(name)
+    return [
+        (
+            "npx",
+            "skills@latest",
+            "add",
+            source,
+            "--global",
+            "--agent",
+            "codex",
+            "claude-code",
+            "--skill",
+            *names,
+            "--yes",
+        )
+        for source, names in packages.items()
+    ]
 
 
 def codebase_install(home: Path, dry_run: bool = False) -> int:
@@ -455,6 +598,10 @@ def main() -> int:
             "install",
             "verify",
             "uninstall",
+            "core-install",
+            "core-verify",
+            "core-update",
+            "core-uninstall",
             "codebase-install",
             "codebase-verify",
             "codebase-update",
@@ -471,6 +618,14 @@ def main() -> int:
         return verify(home)
     if args.command == "uninstall":
         return uninstall(home)
+    if args.command == "core-install":
+        return core_install(home, dry_run=args.dry_run)
+    if args.command == "core-verify":
+        return core_verify(home)
+    if args.command == "core-update":
+        return core_update(home, dry_run=args.dry_run)
+    if args.command == "core-uninstall":
+        return core_uninstall(home, dry_run=args.dry_run)
     if args.command == "codebase-install":
         return codebase_install(home, dry_run=args.dry_run)
     if args.command == "codebase-update":
